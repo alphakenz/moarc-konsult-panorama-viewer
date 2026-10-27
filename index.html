@@ -300,6 +300,17 @@
             <path d="M20 20v-3.7h-3.7" />
           </svg>
         </button>
+        <button class="icon-button" id="musicButton" type="button" aria-label="Play music" aria-pressed="false" data-tooltip="Play music">
+          <svg id="musicPlayIcon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 18V5l10-2v13" />
+            <circle cx="6" cy="18" r="3" />
+            <circle cx="16" cy="16" r="3" />
+          </svg>
+          <svg id="musicPauseIcon" viewBox="0 0 24 24" aria-hidden="true" hidden>
+            <rect x="7" y="5" width="3.5" height="14" rx="1" />
+            <rect x="13.5" y="5" width="3.5" height="14" rx="1" />
+          </svg>
+        </button>
         <button class="icon-button" id="vrButton" type="button" aria-label="Fullscreen view" data-tooltip="Fullscreen view">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M8 4H4v4" />
@@ -338,12 +349,14 @@
       </div>
     </footer>
 
+    <audio id="ambientAudio" src="ambient-panorama.mp3" loop preload="metadata"></audio>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
     <script>
       let viewer;
       let autoRotating = false;
+      const ambientAudio = document.getElementById("ambientAudio");
 
       function createViewer(imageUrl) {
         if (viewer) viewer.destroy();
@@ -374,6 +387,17 @@
         button.setAttribute("aria-pressed", String(autoRotating));
       }
 
+      function updateMusicButton() {
+        const button = document.getElementById("musicButton");
+        const playing = !ambientAudio.paused;
+        const label = playing ? "Pause music" : "Play music";
+        button.setAttribute("aria-label", label);
+        button.setAttribute("data-tooltip", label);
+        button.setAttribute("aria-pressed", String(playing));
+        document.getElementById("musicPlayIcon").toggleAttribute("hidden", playing);
+        document.getElementById("musicPauseIcon").toggleAttribute("hidden", !playing);
+      }
+
       function showToast(message) {
         const toast = document.getElementById("toast");
         toast.textContent = message;
@@ -399,6 +423,25 @@
         }
         updateAutoRotateButton();
       });
+
+      document.getElementById("musicButton").addEventListener("click", async () => {
+        if (ambientAudio.paused) {
+          try {
+            await ambientAudio.play();
+            showToast("Ambient music on");
+          } catch {
+            showToast("Music could not start");
+          }
+        } else {
+          ambientAudio.pause();
+          showToast("Ambient music off");
+        }
+        updateMusicButton();
+      });
+
+      ambientAudio.addEventListener("play", updateMusicButton);
+      ambientAudio.addEventListener("pause", updateMusicButton);
+      updateMusicButton();
 
       document.querySelectorAll("[data-yaw]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -435,3 +478,4 @@
     </script>
   </body>
 </html>
+
